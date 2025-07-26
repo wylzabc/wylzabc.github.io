@@ -93,7 +93,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <p>适用于使用 systemd 的系统（如 Ubuntu 16.04+、CentOS 7+）</p>
 <h1>操作方式</h1>
 <h2>1. 创建服务单元文件</h2>
-<div class="highlight highlight-source-shell"><pre class="notranslate">sudo touch /etc/systemd/system/after-boot.service</pre></div>
+<div class="highlight highlight-source-shell"><pre class="notranslate">sudo vim /etc/systemd/system/after-boot.service</pre></div>
 <p>写入以下内容：</p>
 <div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-en">[Unit]</span>
 <span class="pl-k">Description</span>=Execute script 5 minutes after boot
@@ -103,7 +103,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <span class="pl-k">ExecStart</span>=/path/to/your_script.sh  <span class="pl-c"><span class="pl-c">#</span> 替换为你的脚本路径</span></pre></div>
 <p>保存退出。</p>
 <h2>2. 创建计时器单元文件‌</h2>
-<div class="highlight highlight-source-shell"><pre class="notranslate">sudo touch /etc/systemd/system/after-boot.timer</pre></div>
+<div class="highlight highlight-source-shell"><pre class="notranslate">sudo vim /etc/systemd/system/after-boot.timer</pre></div>
 <p>写入以下内容：</p>
 <div class="highlight highlight-source-ini"><pre class="notranslate"><span class="pl-en">[Unit]</span>
 <span class="pl-k">Description</span>=Run service 5 minutes after boot

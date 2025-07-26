@@ -11,7 +11,7 @@
 ## 1. 创建服务单元文件
 
 ```bash
-sudo touch /etc/systemd/system/after-boot.service
+sudo vim /etc/systemd/system/after-boot.service
 ```
 写入以下内容：
 ```ini
@@ -27,7 +27,7 @@ ExecStart=/path/to/your_script.sh  # 替换为你的脚本路径
 ## 2. 创建计时器单元文件‌
 
 ```bash
-sudo touch /etc/systemd/system/after-boot.timer
+sudo vim /etc/systemd/system/after-boot.timer
 ```
 写入以下内容：
 ```ini
