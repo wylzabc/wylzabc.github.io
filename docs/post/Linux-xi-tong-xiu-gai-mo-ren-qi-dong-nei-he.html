@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/37738057?s=48&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="记录了修改Linux系统默认启动内核的几种方式。">
+<meta property="og:title" content="Linux系统修改默认启动内核">
+<meta property="og:description" content="记录了修改Linux系统默认启动内核的几种方式。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://wylzabc.github.io/post/Linux-xi-tong-xiu-gai-mo-ren-qi-dong-nei-he.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/37738057?s=48&v=4">
+<title>Linux系统修改默认启动内核</title>
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+.copy-feedback {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    color: var(--color-fg-on-emphasis);
+    background-color: var(--color-fg-muted);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">Linux系统修改默认启动内核</h1>
+<div class="title-right">
+    <a href="https://wylzabc.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/wylzabc/wylzabc.github.io/issues/2" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><p>记录了修改Linux系统默认启动内核的几种方式。</p>
+<h1>Ubuntu 24.04/22.04</h1>
+<h3>GRUB启动项</h3>
+<p>查看系统中有哪些内核版本及其索引：<br>
+<code class="notranslate">grep "menuentry" /boot/grub/grub.cfg</code> 命令输出中每行为实例内核启动菜单中的索引项，从0开始编号。例如，对于下面的Ubuntu 24.04实例，有6.8.0-71-generic和6.8.0-54-generic两个内核版本，grub菜单中有两层菜单结构。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/83357809-c8ec-4350-b080-570437dc6cea"><img src="https://github.com/user-attachments/assets/83357809-c8ec-4350-b080-570437dc6cea" alt="Image" style="max-width: 100%;"></a></p>
+<ul>
+<li><code class="notranslate">menuentry 'Ubuntu'﻿</code>
+<ul>
+<li>默认启动项索引号为<code class="notranslate">0</code>，启动项菜单标题为<code class="notranslate">Ubuntu</code>。唯一标识符menuentry_id_option为<code class="notranslate">gnulinux-simple-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。</li>
+</ul>
+</li>
+<li><code class="notranslate">submenu 'Advanced options for Ubuntu'﻿</code>
+<ul>
+<li>子菜单索引号为<code class="notranslate">1</code>，子菜单标题为<code class="notranslate">Advanced options for Ubuntu</code>。唯一标识符为<code class="notranslate">gnulinux-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。 </li>
+<li><code class="notranslate">menuentry 'Ubuntu, with Linux 6.8.0-71-generic'﻿</code>
+<ul>
+<li>启动项索引号为<code class="notranslate">"1&gt;0"</code>，启动项菜单标题为<code class="notranslate">'Ubuntu, with Linux 6.8.0-71-generic'</code>，即6.8.0-71-generic内核启动项。唯一标识符为<code class="notranslate">gnulinux-6.8.0-71-generic-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。 </li>
+</ul>
+</li>
+<li><code class="notranslate">menuentry 'Ubuntu, with Linux 6.8.0-71-generic (recovery mode)'﻿</code>
+<ul>
+<li>启动项索引号为<code class="notranslate">"1&gt;1"</code>，启动项菜单标题为<code class="notranslate">Ubuntu, with Linux 6.8.0-71-generic (recovery mode)</code>，即6.8.0-71-generic内核的恢复模式启动项。唯一标识符为<code class="notranslate">gnulinux-6.8.0-71-generic-recovery-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。</li>
+</ul>
+</li>
+<li><code class="notranslate">menuentry 'Ubuntu, with Linux 6.8.0-54-generic'﻿</code>
+<ul>
+<li>启动项索引号为<code class="notranslate">"1&gt;2"</code>，启动项菜单标题为<code class="notranslate">Ubuntu, with Linux 6.8.0-54-generic</code>，即6.8.0-54-generic内核启动项。唯一标识符为<code class="notranslate">gnulinux-6.8.0-54-generic-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。</li>
+</ul>
+</li>
+<li><code class="notranslate">menuentry 'Ubuntu, with Linux 6.8.0-54-generic (recovery mode)'﻿</code>
+<ul>
+<li>启动项索引号为<code class="notranslate">"1&gt;3"</code>，启动项菜单标题为<code class="notranslate">Ubuntu, with Linux 6.8.0-54-generic (recovery mode)</code>，即6.8.0-54-generic内核的恢复模式启动项。唯一标识符为<code class="notranslate">gnulinux-6.8.0-54-generic-recovery-48906949-0bb0-44c4-9dc2-2134ae62d9b8</code>。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>注意：</p>
+<ol>
+<li><code class="notranslate">"X&gt;Y"</code> 中X为主菜单序号，Y为子菜单序号，&gt;前后无空格‌。需要带上双引号。 </li>
+<li>﻿<code class="notranslate">menuentry_id_option</code>是唯一标识符，格式为 <code class="notranslate">gnulinux-simple-&lt;磁盘UUID&gt;</code>、<code class="notranslate">gnulinux-&lt;kernel-version&gt;-advanced-&lt;磁盘UUID&gt;</code>或者<code class="notranslate">gnulinux-&lt;kernel-version&gt;-recovery-&lt;磁盘UUID&gt;</code>。 </li>
+<li>可以采用启动项菜单标题方式指定默认启动项。例如，<code class="notranslate">"1&gt;2"</code>可以改为<code class="notranslate">"Advanced options for Ubuntu&gt;Ubuntu, with Linux 6.8.0-54-generic"</code>。 </li>
+<li>可以采用唯一标识符方式指定默认启动项。例如，<code class="notranslate">"1&gt;2"</code>可以改为<code class="notranslate">"gnulinux-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8&gt;gnulinux-6.8.0-54-generic-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8"</code>。</li>
+</ol>
+<h2>修改启动项</h2>
+<p>以上图Ubuntu 24.04实例为例，修改为以6.8.0-54-generic内核启动。</p>
+<p></p><div><div><div><p></p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>方法</th>
+<th>方法1：修改/etc/default/grub持久修改启动项</th>
+<th>方法2：使用saved_entry方法持久修改启动项</th>
+<th>方法3：使用next_entry临时修改启动项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>是否持久化</td>
+<td>持久化</td>
+<td>持久化</td>
+<td>临时修改一次</td>
+</tr>
+<tr>
+<td>是否需要更新grub.cfg</td>
+<td>每次修改都需要执行update-grub命令更新grub.cfg</td>
+<td>只在第一次在/etc/default/grub中设置GRUB_DEFAULT=saved时执行update-grub命令更新grub.cfg。后续使用grub-set-default或者grub-editenv命令直接更新grubenv设置。</td>
+<td>不需要更新grub.cfg。直接使用grub-reboot或者grub-editenv命令更新</td>
+</tr>
+<tr>
+<td>优点</td>
+<td>适用于全局配置，可指定任意菜单项</td>
+<td>更安全，避免直接编辑配置文件导致的语法错误</td>
+<td>方便进行临时修改</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>每次更新启动项都要更新grub.cfg</td>
+<td>需要设置GRUB_DEFAULT=saved，否则grubenv设置不会生效</td>
+<td>非持久化修改</td>
+</tr>
+<tr>
+<td>使用场景</td>
+<td>需要深度定制启动顺序（如调整子菜单优先级）需兼容非saved模式的特殊配置（如固定索引启动）</td>
+<td>多系统环境下快速切换默认启动项脚本自动化管理（如内核升级后自动设置新内核为默认项）</td>
+<td>测试新内核或修复启动问题</td>
+</tr>
+<tr>
+<td>修改方式</td>
+<td>修改GRUB_DEFAULT配置，并执行update-grub</td>
+<td>若GRUB_DEFAULT未设置为saved，需修改需GRUB_DEFAULT=saved，并执行update-grub﻿使用grub-set-default命令修改grubenv中saved_entry设置</td>
+<td>只需执行grub-reboot命令修改grubenv中next_entry设置</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+</div><div><br></div></div></div><span>﻿</span>
+<h3>方法1：修改/etc/default/grub持久修改启动项</h3>
+<p>操作步骤：</p>
+<ol>
+<li>修改<code class="notranslate">/etc/default/grub</code>，将GRUB_DEFAULT配置项设置为<code class="notranslate">"1&gt;2"</code>、<code class="notranslate">"Advanced options for Ubuntu&gt;Ubuntu, with Linux 6.8.0-54-generic"</code>或者<code class="notranslate">"gnulinux-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8&gt;gnulinux-6.8.0-54-generic-advanced-48906949-0bb0-44c4-9dc2-2134ae62d9b8"</code>。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/f3ce0b3c-91c8-44bd-8cbc-74bbd23c8bdb"><img width="960" height="401" alt="Image" src="https://github.com/user-attachments/assets/f3ce0b3c-91c8-44bd-8cbc-74bbd23c8bdb" style="max-width: 100%; height: auto; max-height: 401px;"></a></p>
+<ol start="2">
+<li>执行<code class="notranslate">update-grub</code> 。之后可以在<code class="notranslate">/boot/grub/grub.cfg</code> 配置文件中看到default被设置为<code class="notranslate">"1&gt;2"</code> 。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/10f7d5d5-80d6-44a2-a147-6a337dfb424e"><img width="568" height="592" alt="Image" src="https://github.com/user-attachments/assets/10f7d5d5-80d6-44a2-a147-6a337dfb424e" style="max-width: 100%; height: auto; max-height: 592px;"></a></p>
+<ol start="3">
+<li>重启实例。在vnc中可以看到GRUB图形界面中选中<code class="notranslate">Advanced options for Ubuntu</code> 子菜单。之后，加载6.8.0-54-generic内核。登录实例，<code class="notranslate">uname -r</code> 查看当前启动的内核版本。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/513e0fc7-fc13-4c25-8f2a-4cebbd7561ec"><img width="952" height="566" alt="Image" src="https://github.com/user-attachments/assets/513e0fc7-fc13-4c25-8f2a-4cebbd7561ec" style="max-width: 100%; height: auto; max-height: 566px;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/0b2b028b-45fc-40f1-b38a-c3b1cf69663d"><img width="500" height="152" alt="Image" src="https://github.com/user-attachments/assets/0b2b028b-45fc-40f1-b38a-c3b1cf69663d" style="max-width: 100%; height: auto; max-height: 152px;"></a></p>
+<h3>方法2：使用<code class="notranslate">saved_entry</code> 方法持久修改启动项</h3>
+<p>记录用户上次选择的启动项，需配合<code class="notranslate">GRUB_DEFAULT=saved</code> 使用，实现持久化记忆功能。<br>
+操作步骤：</p>
+<ol>
+<li>修改<code class="notranslate">/etc/default/grub</code> ，将GRUB_DEFAULT配置为<code class="notranslate">"saved"</code> ，之后执行<code class="notranslate">update-grub</code> 。检查<code class="notranslate">/boot/grub/grub.cfg</code> 文件，可以看到default被设置为<code class="notranslate">"${saved_entry}"</code></li>
+</ol>
+<div class="highlight highlight-source-shell"><pre class="notranslate"><span class="pl-c"><span class="pl-c">#</span> 修改/etc/default/grub</span>
+GRUB_DEFAULT=<span class="pl-s"><span class="pl-pds">"</span>saved<span class="pl-pds">"</span></span>
+GRUB_SAVEDEFAULT=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>  <span class="pl-c"><span class="pl-c">#</span> 可选：自动保存新选择</span>
+sudo update-grub</pre></div>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/da8f9d2a-bb44-4010-b20f-8954f6ac7a11"><img width="602" height="751" alt="Image" src="https://github.com/user-attachments/assets/da8f9d2a-bb44-4010-b20f-8954f6ac7a11" style="max-width: 100%; height: auto; max-height: 751px;"></a></p>
+<ol start="2">
+<li>使用<code class="notranslate">grub-set-default</code> 命令指定内核启动。检查<code class="notranslate">/boot/grub/grubenv</code> 文件，看到<code class="notranslate">saved_entry</code> 被设置为<code class="notranslate">1&gt;2</code></li>
+</ol>
+<pre class="notranslate"><code class="notranslate">grub-set-default "1&gt;2"
+</code></pre>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/77429748-b7e9-4976-88a7-b51e129c317b"><img width="1649" height="165" alt="Image" src="https://github.com/user-attachments/assets/77429748-b7e9-4976-88a7-b51e129c317b" style="max-width: 100%; height: auto; max-height: 165px;"></a></p>
+<ol start="3">
+<li>重启实例。在vnc中可以看到GRUB图形界面中选中<code class="notranslate">Advanced options for Ubuntu</code>子菜单。之后，加载6.8.0-54-generic内核。</li>
+</ol>
+<h3>方法3：使用<code class="notranslate">next_entry</code>临时修改启动项</h3>
+<p>临时设置下一次启动的菜单项（仅生效一次），重启后恢复原配置，常用于测试新内核或修复启动问题。<br>
+无需配合<code class="notranslate">GRUB_DEFAULT=saved</code>使用。<br>
+操作步骤：</p>
+<ol>
+<li>执行<code class="notranslate">grub-reboot "1&gt;2"</code>命令，设置下次临时使用6.8.0-54-generic内核启动。使用<code class="notranslate">grub-editenv list</code>命令可以看到<code class="notranslate">next_entry=1&gt;2</code>设置。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/8fec8d6f-e471-4efd-9f99-3637fbd629d2"><img width="960" height="131" alt="Image" src="https://github.com/user-attachments/assets/8fec8d6f-e471-4efd-9f99-3637fbd629d2" style="max-width: 100%; height: auto; max-height: 131px;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/26e04077-fa45-4d39-8fa6-a5f4044524a6"><img width="960" height="93" alt="Image" src="https://github.com/user-attachments/assets/26e04077-fa45-4d39-8fa6-a5f4044524a6" style="max-width: 100%; height: auto; max-height: 93px;"></a></p>
+<ol start="2">
+<li>重启实例。在vnc中可以看到GRUB图形界面中选中<code class="notranslate">Advanced options for Ubuntu</code>子菜单。之后，加载6.8.0-54-generic内核。登录实例，<code class="notranslate">uname -r</code>查看当前启动的内核版本。</li>
+</ol>
+<h1>Rocky Linux 9/8、CentOS 8</h1>
+<h2>GRUB启动项</h2>
+<p>Rocky Linux 默认使用<code class="notranslate">GRUB_DEFAULT=saved</code>设置。GRUB菜单启动项在<code class="notranslate">/boot/loader/entries/</code>目录下。如下图，Rocky Linux 9.4实例有两个内核5.14.0-427.13.1.el9_4.x86_64和5.14.0-427.42.1.el9_4.x86_64。</p>
+<pre class="notranslate"><code class="notranslate">[root@image-test ~]# ls /boot/loader/entries/
+63d587c2144840dcbb5dff9795a00d50-0-rescue.conf  63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64.conf  63d587c2144840dcbb5dff9795a00d50-5.14.0-427.42.1.el9_4.x86_64.conf
+[root@image-test ~]# cd /boot/loader/entries/
+[root@image-test entries]# ls
+63d587c2144840dcbb5dff9795a00d50-0-rescue.conf  63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64.conf  63d587c2144840dcbb5dff9795a00d50-5.14.0-427.42.1.el9_4.x86_64.conf
+[root@image-test entries]# cat 63d587c2144840dcbb5dff9795a00d50-0-rescue.conf 
+title Rocky Linux (0-rescue-63d587c2144840dcbb5dff9795a00d50) 9.4 (Blue Onyx)
+version 0-rescue-63d587c2144840dcbb5dff9795a00d50
+linux /boot/vmlinuz-0-rescue-63d587c2144840dcbb5dff9795a00d50
+initrd /boot/initramfs-0-rescue-63d587c2144840dcbb5dff9795a00d50.img
+options root=UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1 ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable 
+grub_users $grub_users
+grub_arg --unrestricted
+grub_class rocky
+[root@image-test entries]# cat 63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64.conf
+title Rocky Linux (5.14.0-427.13.1.el9_4.x86_64) 9.4 (Blue Onyx)
+version 5.14.0-427.13.1.el9_4.x86_64
+linux /boot/vmlinuz-5.14.0-427.13.1.el9_4.x86_64
+initrd /boot/initramfs-5.14.0-427.13.1.el9_4.x86_64.img $tuned_initrd
+options root=UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1 ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable 
+grub_users $grub_users
+grub_arg --unrestricted
+grub_class rocky
+[root@image-test entries]# cat 63d587c2144840dcbb5dff9795a00d50-5.14.0-427.42.1.el9_4.x86_64.conf
+title Rocky Linux (5.14.0-427.42.1.el9_4.x86_64) 9.4 (Blue Onyx)
+version 5.14.0-427.42.1.el9_4.x86_64
+linux /boot/vmlinuz-5.14.0-427.42.1.el9_4.x86_64
+initrd /boot/initramfs-5.14.0-427.42.1.el9_4.x86_64.img $tuned_initrd
+options root=UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1 ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable 
+grub_users $grub_users
+grub_arg --unrestricted
+grub_class rocky
+</code></pre>
+<p>可以通过grubby命令获取启动项信息，并设置默认启动项。</p>
+<pre class="notranslate"><code class="notranslate"># grubby --info=ALL
+index=0
+kernel="/boot/vmlinuz-5.14.0-427.42.1.el9_4.x86_64"
+args="ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable"
+root="UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1"
+initrd="/boot/initramfs-5.14.0-427.42.1.el9_4.x86_64.img $tuned_initrd"
+title="Rocky Linux (5.14.0-427.42.1.el9_4.x86_64) 9.4 (Blue Onyx)"
+id="63d587c2144840dcbb5dff9795a00d50-5.14.0-427.42.1.el9_4.x86_64"
+index=1
+kernel="/boot/vmlinuz-5.14.0-427.13.1.el9_4.x86_64"
+args="ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable"
+root="UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1"
+initrd="/boot/initramfs-5.14.0-427.13.1.el9_4.x86_64.img $tuned_initrd"
+title="Rocky Linux (5.14.0-427.13.1.el9_4.x86_64) 9.4 (Blue Onyx)"
+id="63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64"
+index=2
+kernel="/boot/vmlinuz-0-rescue-63d587c2144840dcbb5dff9795a00d50"
+args="ro net.ifnames=0 console=tty0 console=ttyS0,115200 intel_idle.max_cstate=1 nopti nospectre_v2 nospec_store_bypass_disable"
+root="UUID=b8b13ace-e420-4f42-b36f-6ee51a44fda1"
+initrd="/boot/initramfs-0-rescue-63d587c2144840dcbb5dff9795a00d50.img"
+title="Rocky Linux (0-rescue-63d587c2144840dcbb5dff9795a00d50) 9.4 (Blue Onyx)"
+id="63d587c2144840dcbb5dff9795a00d50-0-rescue"
+</code></pre>
+<p>与Ubuntu系统类似，Rocky Linux系统也可以通过修改saved_entry为特定的index、id等来更新系统默认启动内核。</p>
+<h2>修改默认启动项</h2>
+<p>以上述Rocky Linux 9.4实例为例，修改为以5.14.0-427.13.1.el9_4.x86_64内核启动。</p>
+<p></p><div><div><div><p></p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>方法</th>
+<th>方法1：grubby持久化修改启动内核（推荐）</th>
+<th>方法2：修改/etc/default/grub持久修改启动项</th>
+<th>方法3：使用next_entry临时修改启动项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>是否持久化</td>
+<td>持久化</td>
+<td>持久化</td>
+<td>临时修改一次</td>
+</tr>
+<tr>
+<td>是否需要更新grub.cfg</td>
+<td>系统/etc/default/grub默认配置了GRUB_DEFAULT=saved无需更改grub.cfg。若改成了其它配置，需要重新改为RUB_DEFAULT=saved，并更新grub.cfg。后续使用grubby命令直接更新grubenv设置。</td>
+<td>每次修改都需要执行grub2-mkconfig命令更新grub.cfg</td>
+<td>不需要更新grub.cfg。直接使用grub2-reboot命令更新</td>
+</tr>
+<tr>
+<td>优点</td>
+<td>更安全，避免直接编辑配置文件导致的语法错误</td>
+<td>适用于全局配置，可指定任意菜单项</td>
+<td>方便进行临时修改</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>需要设置GRUB_DEFAULT=saved，否则grubenv设置不会生效</td>
+<td>每次更新启动项都要更新grub.cfg</td>
+<td>非持久化修改</td>
+</tr>
+<tr>
+<td>使用场景</td>
+<td>多系统环境下快速切换默认启动项脚本自动化管理（如内核升级后自动设置新内核为默认项）</td>
+<td>需要深度定制启动顺序（如调整子菜单优先级）需兼容非saved模式的特殊配置（如固定索引启动）</td>
+<td>测试新内核或修复启动问题</td>
+</tr>
+<tr>
+<td>修改方式</td>
+<td>若GRUB_DEFAULT未设置为saved，需修改需GRUB_DEFAULT=saved，并执行grub2-mkconfig -o /boot/grub2/grub.cfg命令使用grubby命令修改grubenv中saved_entry设置</td>
+<td>修改GRUB_DEFAULT配置，并执行grub2-mkconfig -o /boot/grub2/grub.cfg命令</td>
+<td>只需执行grub-reboot命令修改grubenv中next_entry设置</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+</div><div><br></div></div></div><span>﻿</span>
+<h3>方法1：grubby持久化修改启动内核</h3>
+<p>在Rocky Linux系统中，/etc/default/grub默认设置了<code class="notranslate">GRUB_DEFAULT=saved</code>。可以直接通过grubby命令修改启动内核。</p>
+<p>操作步骤：</p>
+<ol>
+<li>使用grubby命令修改默认启动项为5.14.0-427.13.1.el9_4.x86_64内核。可通过<code class="notranslate">grubby --set-default="/boot/vmlinuz-5.14.0-427.13.1.el9_4.x86_64"</code>或者<code class="notranslate">grubby --set-default-index=1</code>命令操作。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/96caa8c5-70e4-4250-83c1-603ae044ff61"><img width="960" height="94" alt="Image" src="https://github.com/user-attachments/assets/96caa8c5-70e4-4250-83c1-603ae044ff61" style="max-width: 100%; height: auto; max-height: 94px;"></a></p>
+<ol start="2">
+<li>重启实例，可以从vnc界面看到GRUB界面中从5.14.0-427.13.1.el9_4.x86_64内核进入系统。</li>
+</ol>
+<h3>方法2：修改<code class="notranslate">/etc/default/grub</code>持久修改启动项</h3>
+<p>在Rocky Linux系统中，将<code class="notranslate">/etc/default/grub</code>中<code class="notranslate">GRUB_DEFAULT</code>设置为指定内核index或者id。更新grub.cfg。此时，grubby设置的<code class="notranslate">saved_entry</code>启动项将不再起作用。</p>
+<p>操作步骤：</p>
+<ol>
+<li>修改<code class="notranslate">/etc/default/grub</code>中<code class="notranslate">GRUB_DEFAULT</code>为<code class="notranslate">"1"</code>、<code class="notranslate">"63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64"</code>或者<code class="notranslate">"Rocky Linux (5.14.0-427.13.1.el9_4.x86_64) 9.4 (Blue Onyx)"</code>。</li>
+<li>更新grub.cfg：<code class="notranslate">grub2-mkconfig -o /boot/grub2/grub.cfg</code></li>
+<li>重启实例，可以从vnc界面看到GRUB界面中从5.14.0-427.13.1.el9_4.x86_64内核进入系统。</li>
+</ol>
+<h3>方法3：使用next_entry临时修改启动项</h3>
+<p>临时设置下一次启动的菜单项（仅生效一次），重启后恢复原配置，常用于测试新内核或修复启动问题。<br>
+同Ubuntu系统类似，在Rocky Linux系统中，可以使用<code class="notranslate">grub2-reboot</code>命令临时设置下次启动内核。<br>
+操作步骤：</p>
+<ol>
+<li>执行<code class="notranslate">grub2-reboot "1"</code>命令、<code class="notranslate">grub2-reboot "63d587c2144840dcbb5dff9795a00d50-5.14.0-427.13.1.el9_4.x86_64"</code>命令或者<code class="notranslate">grub2-reboot "Rocky Linux (5.14.0-427.13.1.el9_4.x86_64) 9.4 (Blue Onyx)"</code>命令。检查<code class="notranslate">/boot/grub2/grubenv</code>文件中<code class="notranslate">next_entry</code>字段被设置为指定启动项。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/a2f384b1-0749-41f3-8c98-1aeb8e58bb3e"><img width="960" height="127" alt="Image" src="https://github.com/user-attachments/assets/a2f384b1-0749-41f3-8c98-1aeb8e58bb3e" style="max-width: 100%; height: auto; max-height: 127px;"></a></p>
+<ol start="2">
+<li>重启实例。在vnc中可以看到GRUB图形界面中选中<code class="notranslate">Rocky Linux (5.14.0-427.13.1.el9_4.x86_64) 9.4 (Blue Onyx)</code>菜单选项。之后，加载5.14.0-427.13.1.el9_4.x86_64内核。登录实例看到<code class="notranslate">next_entry</code>字段设置被清空。</li>
+</ol>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/user-attachments/assets/6c4d3716-c45d-41e1-8cec-c98e3f4c08fe"><img width="960" height="129" alt="Image" src="https://github.com/user-attachments/assets/6c4d3716-c45d-41e1-8cec-c98e3f4c08fe" style="max-width: 100%; height: auto; max-height: 129px;"></a></p>
+<h1>其他</h1>
+<h2>grub-editenv</h2>
+<blockquote>
+<p>~# grub-editenv --help<br>
+Usage: grub-editenv [OPTION...] FILENAME COMMAND</p>
+<p>Tool to edit environment block.</p>
+<p>Commands:<br>
+create                     Create a blank environment block file.<br>
+list                       List the current variables.<br>
+set [NAME=VALUE ...]       Set variables.<br>
+unset [NAME ...]           Delete variables.</p>
+<p>Options:<br>
+-?, --help                 give this help list<br>
+--usage                give a short usage message<br>
+-v, --verbose              print verbose messages.<br>
+-V, --version              print program version</p>
+<p>If FILENAME is `-', the default value /boot/grub/grubenv is used.</p>
+<p>There is no <code class="notranslate">delete' command; if you want to delete the whole environment block, use </code>rm /boot/grub/grubenv'.</p>
+<p>Report bugs to <a href="mailto:bug-grub@gnu.org">bug-grub@gnu.org</a>.</p>
+</blockquote>
+<p>使用技巧：</p>
+<pre class="notranslate"><code class="notranslate"># 创建空白grubenv文件，覆盖/boot/grub/grubenv设置
+grub-editenv create
+# 创建一个空白grubenv文件
+grub-editenv /yourpath/grubenv create
+# 查看grubenv设置列表
+grub-editenv list
+# 临时设置下一次驱动使用"1&gt;2"启动菜单项
+grub-editenv /boot/grub/grubenv set next_entry="1&gt;2"
+# 设置持久化启动项"1&gt;2"，需确保/etc/default/grub中设置了GRUB_DEFAULT=saved，并且已更新/boot/grub/grub.cfg文件
+grub-editenv /boot/grub/grubenv set saved_entry="1&gt;2"
+# 取消next_entry设置
+grub-editenv /boot/grub/grubenv unset next_entry
+</code></pre>
+<h2>grub-set-default</h2>
+<blockquote>
+<p>~# grub-set-default --help<br>
+Usage: grub-set-default [OPTION] MENU_ENTRY<br>
+Set the default boot menu entry for GRUB.<br>
+This requires setting GRUB_DEFAULT=saved in /etc/default/grub.</p>
+<p>-h, --help              print this message and exit<br>
+-V, --version           print the version information and exit<br>
+--boot-directory=DIR    expect GRUB images under the directory DIR/grub<br>
+instead of the /boot/grub directory</p>
+<p>MENU_ENTRY is a number, a menu item title or a menu item identifier.</p>
+<p>Report bugs to <a href="mailto:bug-grub@gnu.org">bug-grub@gnu.org</a>.</p>
+</blockquote>
+<p>使用技巧：</p>
+<pre class="notranslate"><code class="notranslate"># 需确保/etc/default/grub中设置了GRUB_DEFAULT=saved，并且已更新/boot/grub/grub.cfg文件
+# 设置持久化启动项"1&gt;2"
+grub-set-default "1&gt;2"
+# 检查
+grub-editenv list
+</code></pre>
+<h2>grub-reboot</h2>
+<blockquote>
+<p>~# grub-reboot -h<br>
+Usage: grub-reboot [OPTION] MENU_ENTRY<br>
+Set the default boot menu entry for GRUB, for the next boot only.<br>
+-h, --help              print this message and exit<br>
+-V, --version           print the version information and exit<br>
+--boot-directory=DIR    expect GRUB images under the directory DIR/grub<br>
+instead of the /boot/grub directory</p>
+<p>MENU_ENTRY is a number, a menu item title or a menu item identifier. Please note that menu items in submenus or sub-submenus require specifying the submenu components and then the menu item component. The titles should be separated using the greater-than character (&gt;) with no extra spaces. Depending on your shell some characters including may need escaping. More information about this is available in the GRUB Manual in the section about the 'default' command.</p>
+<p>NOTE: In cases where GRUB cannot write to the environment block, such as when it is stored on an MDRAID or LVM device, the chosen boot menu entry will remain the default even after reboot.</p>
+<p>Report bugs to <a href="mailto:bug-grub@gnu.org">bug-grub@gnu.org</a>.</p>
+</blockquote>
+<p>使用技巧：</p>
+<pre class="notranslate"><code class="notranslate"># 临时设置下一次驱动使用"1&gt;2"启动菜单项
+grub-reboot "1&gt;2"
+# 检查
+grub-editenv list
+cat /boot/grub/grubenv
+</code></pre>
+<h2>grubby</h2>
+<blockquote>
+<p>~# grubby --help<br>
+Usage: grubby [OPTION...]<br>
+--add-kernel=kernel-path            add an entry for the specified kernel<br>
+--args=args                         default arguments for the new kernel or new arguments for kernel being updated)<br>
+--bad-image-okay                    don't sanity check images in boot entries (for testing only)<br>
+-c, --config-file=path                  path to grub config file to update ("-" for stdin)<br>
+--copy-default                      use the default boot entry as a template for the new entry being added; if the default is not a linux image, or if &gt;the kernel referenced by the default image does not exist, the<br>
+first linux entry whose kernel does exist is used as the template<br>
+--default-kernel                    display the path of the default kernel<br>
+--default-index                     display the index of the default kernel<br>
+--default-title                     display the title of the default kernel<br>
+--env=path                          path for environment data<br>
+--grub2                             configure grub2 bootloader<br>
+--info=kernel-path                  display boot information for specified kernel<br>
+--initrd=initrd-path                initrd image for the new kernel<br>
+-i, --extra-initrd=initrd-path          auxiliary initrd image for things other than the new kernel<br>
+--make-default                      make the newly added entry the default boot entry<br>
+--remove-args=STRING                remove kernel arguments<br>
+--remove-kernel=kernel-path         remove all entries for the specified kernel<br>
+--set-default=kernel-path           make the first entry referencing the specified kernel the default<br>
+--set-default-index=entry-index     make the given entry index the default entry<br>
+--title=entry-title                 title to use for the new kernel entry<br>
+--update-kernel=kernel-path         updated information for the specified kernel<br>
+--zipl                              configure zipl bootloader<br>
+-b, --bls-directory                     path to directory containing the BootLoaderSpec fragment files<br>
+--no-etc-grub-update                don't update the GRUB_CMDLINE_LINUX variable in /etc/default/grub</p>
+<p>Help options:<br>
+-h, --help                              Show this help message</p>
+</blockquote>
+<p>使用技巧：</p>
+<pre class="notranslate"><code class="notranslate"># 查看所有启动项信息
+grubby --info=ALL
+# 查看默认启动项内核路径
+grubby --default-kernel
+# 查看默认启动项索引
+grubby --default-index
+# 查看默认启动项标题
+grubby --default-title
+# 查看指定内核的启动项信息
+grubby --info=&lt;kernel-path&gt;
+# 使用kernel-path设置默认启动内核
+grubby --set-default=&lt;kernel-path&gt;
+# 使用entry-index设置默认启动内核
+grubby --set-default-index=&lt;kernel-index&gt;
+</code></pre>
+<h2>GRUB选项</h2>
+<p><strong>GRUB_DEFAULT</strong></p>
+<blockquote>
+<pre class="notranslate"><code class="notranslate">The default menu entry.  This may be a number, in which case it identifies the Nth entry in the generated menu counted from zero, or the title of a menu entry, or the special string ‘saved’.  Using the id may be useful if you want to set a menu entry as the default even though there may be a variable number of entries before it.
+
+For example, if you have:
+
+menuentry 'Example GNU/Linux distribution' --class gnu-linux --id example-gnu-linux {
+   ...
+}
+
+then you can make this the default using:
+
+     GRUB_DEFAULT=example-gnu-linux
+
+Previously it was documented the way to use entry title.  While this still works it's not recommended since titles often contain unstable device names and may be translated
+
+If you set this to ‘saved’, then the default menu entry will be that saved by ‘GRUB_SAVEDEFAULT’ or ‘grub-set-default’.  This relies on the environment block, which may not be available in all situations (*note Environment block::).
+
+The default is ‘0’.
+</code></pre>
+</blockquote>
+<p><strong>GRUB_SAVEDEFAULT</strong></p>
+<blockquote>
+<p>If this option is set to ‘true’, then, when an entry is selected,<br>
+save it as a new default entry for use by future runs of GRUB. This<br>
+is only useful if ‘GRUB_DEFAULT=saved’; it is a separate option<br>
+because ‘GRUB_DEFAULT=saved’ is useful without this option, in<br>
+conjunction with ‘grub-set-default’.  Unset by default.  This<br>
+option relies on the environment block, which may not be available<br>
+in all situations (*note Environment block::).</p>
+</blockquote></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://wylzabc.github.io">wylzabc</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z', 'copy': 'M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z', 'check': 'M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","wylzabc/wylzabc.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const createClipboardHTML = (codeContent, additionalClasses = '') => `
+        <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
+        <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            </clipboard-copy>
+            <div class="copy-feedback">Copied!</div>
+        </div>
+    `;
+
+    const handleCodeElements = (selector = '') => {
+        document.querySelectorAll(selector).forEach(codeElement => {
+            const codeContent = codeElement.innerHTML;
+            const newStructure = document.createElement('div');
+            newStructure.className = 'snippet-clipboard-content position-relative overflow-auto';
+            newStructure.innerHTML = createClipboardHTML(codeContent);
+
+            const parentElement = codeElement.parentElement;
+            if (selector.includes('highlight')) {
+                parentElement.insertBefore(newStructure, codeElement.nextSibling);
+                parentElement.removeChild(codeElement);
+            } else {
+                parentElement.parentElement.replaceChild(newStructure, parentElement);
+            }
+        });
+    };
+
+    handleCodeElements('pre.notranslate > code.notranslate');
+    handleCodeElements('div.highlight > pre.notranslate');
+
+    let currentFeedback = null;
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => {
+            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyIcon = copyButton.querySelector('.octicon-copy');
+            const checkIcon = copyButton.querySelector('.octicon-check');
+            const copyFeedback = copyButton.nextElementSibling;
+
+            if (currentFeedback && currentFeedback !== copyFeedback) {currentFeedback.style.display = 'none';}
+            currentFeedback = copyFeedback;
+
+            copyIcon.classList.add('d-none');
+            checkIcon.classList.remove('d-none');
+            copyFeedback.style.display = 'block';
+            copyButton.style.borderColor = 'var(--color-success-fg)';
+
+            setTimeout(() => {
+                copyIcon.classList.remove('d-none');
+                checkIcon.classList.add('d-none');
+                copyFeedback.style.display = 'none';
+                copyButton.style.borderColor = '';
+            }, 2000);
+        });
+    });
+});
+
+</script>
+
+
+</html>
